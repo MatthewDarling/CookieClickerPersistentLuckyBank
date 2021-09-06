@@ -2,10 +2,10 @@
         "Name": "Persistent Lucky Bank",
         "ID": "persistent lucky bank",
         "Author": "Matthew Darling",
-        "Description": "Makes the game more fun by snapshotting your Lucky! cookie amounts, avoiding the need to carry a bank forever.",
-        "ModVersion": 1.0,
+        "Description": "Save a minimum 'cookie bank' whenever giving a Lucky! bonus from Golden Cookies. This avoids the need to maintain a hoard of cookies that you never spend.",
+        "ModVersion": 2.0,
         "GameVersion": 2.031,
-        "Date": "05/09/2021",
+        "Date": "06/09/2021",
         "Dependencies": [],
         "Disabled": 1
 }
