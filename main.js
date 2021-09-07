@@ -1,4 +1,3 @@
-// Eventually, should also support Conjure Baked Goods from the Wizard Tower Grimoire
 var modName = 'persistent lucky bank';
 
 myModObject = {
@@ -275,6 +274,37 @@ myModObject = {
         else PlaySound('snd/shimmerClick.mp3');
         me.die();
     },
+    // This function will be injected into the Wizard Tower minigame, overwriting the original success function for Conjure Baked Goods
+    newConjureBakedGoods: function() {
+        this.writeMinCookieBank();
+        
+        var val = Math.max(7,
+                           Math.min(Game.minCookieBank * 0.15,
+                                       this.minutesOfProduction(Game.cookiesPs, 30)));
+        
+        Game.Earn(val);
+        Game.Notify('Conjure baked goods!','You magic <b>'+Beautify(val)+' cookie'+(val==1?'':'s')+'</b> out of thin air.',[21,11],6);
+        Game.Popup('<div style="font-size:80%;">+'+Beautify(val)+' cookie'+(val==1?'':'s')+'!</div>',Game.mouseX,Game.mouseY);
+    },
+    // This is a clever self-deleting hook, retrieving itself at runtime and then asking for its hook to be removed
+    maybeInjectIntoWizardMinigame: function() {
+        // If the minigame exists...
+        if (typeof Game.Objects['Wizard tower'].minigame !== 'undefined') {
+            // and if the we haven't already done the injection...
+            if (typeof Game.Objects['Wizard tower'].minutesOfProduction === 'undefined') {
+                // then inject helper functions + cookie bank behaviour into the Wizard Tower minigame
+                var myMod = Game.mods[modName];
+                var conjureBakedGoods = Game.Objects['Wizard tower'].minigame.spells['conjure baked goods'];
+                
+                conjureBakedGoods.writeMinCookieBank = myMod.writeMinCookieBank;
+                conjureBakedGoods.minutesOfProduction = myMod.minutesOfProduction;
+                conjureBakedGoods.win = myMod.newConjureBakedGoods;
+
+                // Now that the code injection has succeeded, remove the hook
+                Game.removeHook('check', myMod.maybeInjectIntoWizardMinigame);
+            }
+        }
+    },
     init: function() {
         if (typeof Game.minCookieBank === 'undefined') { Game.minCookieBank = 0; }
         Game.registerHook('reset', this.resetMinCookieBank);
@@ -288,6 +318,10 @@ myModObject = {
 
         originalGoldenCookiePop = Game.shimmerTypes['golden'].popFunc;
         Game.shimmerTypes['golden'].popFunc = this.newGoldenCookiePop;
+
+        // The Wizard Tower minigame doesn't exist unless you've upgraded the building with sugar lumps
+        // So the injection is done with a check type hook, which runs every few seconds
+        Game.registerHook('check', this.maybeInjectIntoWizardMinigame);
     },
     save: function() {
         return Game.minCookieBank.toString();
