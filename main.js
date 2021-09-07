@@ -1,4 +1,5 @@
 // Eventually, should also support Conjure Baked Goods from the Wizard Tower Grimoire
+var modName = 'persistent lucky bank';
 
 myModObject = {
     resetMinCookieBank: function() {
@@ -7,18 +8,21 @@ myModObject = {
     // These helper function will be added to the Golden Cookie definition, by this.init()
     // These injections aren't strictly necessary, because this original object can be referenced through Game.mods
     // But conceptually, I like that the Golden Cookie object having these methods
-    fifteenMinOfProduction: function(cps) {
-        return cps * 60 * 15;
+    writeMinCookieBank: function() {
+        // If the current cookie total is higher than the "cookie bank", save as the new cookie bank
+        Game.minCookieBank = Math.max(Game.minCookieBank, Game.cookies)
+    },
+    minutesOfProduction: function(cps, minutes) {
+        return cps * 60 * minutes;
     },
     calcLuckyAmount: function(cookies, cps) {
         // This is the original Lucky! formula
         // Provides 15% of cookies owned, or 15 minutes of cookie production - whichever is lowest, and then add 13 for good measure
         return 13 + Math.min(cookies * 0.15,
-                             this.fifteenMinOfProduction(cps));
+                             this.minutesOfProduction(cps, 15));
     },
     moddedLuckyAmount: function(goldenCookieMult) {
-        // If the current cookie total is higher than the "cookie bank", save as the new cookie bank
-        Game.minCookieBank = Math.max(Game.minCookieBank, Game.cookies)
+        this.writeMinCookieBank();
 
         // Run the original Lucky! formula, changing just the cookie input value
         // This accounts properly for all the many ways cookies-per-second can be modified
@@ -277,7 +281,8 @@ myModObject = {
 
         // Inject functions into the Golden Cookie object
         // Strictly speaking, only the popFunc inject is necessary, but I got tired of pulling helper functions from Game.mods
-        Game.shimmerTypes['golden'].fifteenMinOfProduction = this.fifteenMinOfProduction;
+        Game.shimmerTypes['golden'].writeMinCookieBank = this.writeMinCookieBank;
+        Game.shimmerTypes['golden'].minutesOfProduction = this.minutesOfProduction;
         Game.shimmerTypes['golden'].calcLuckyAmount = this.calcLuckyAmount;
         Game.shimmerTypes['golden'].moddedLuckyAmount = this.moddedLuckyAmount;
 
@@ -298,8 +303,8 @@ myModObject = {
 if (typeof Steam !== 'undefined') {
     // Need to add a delay for steam
     setTimeout(function() {
-        Game.registerMod('persistent lucky bank', myModObject);
+        Game.registerMod(modName, myModObject);
     }, 2000);
 } else {
-    Game.registerMod('persistent lucky bank', myModObject);
+    Game.registerMod(modName, myModObject);
 }
